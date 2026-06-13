@@ -1,35 +1,44 @@
-name: CloudOps CI-CD Pipeline
+name: Flask CI
 
 on:
   push:
-    branches: [ master, main ]
+    branches:
+      - main
 
 jobs:
-  build-and-push:
+  test:
+
     runs-on: ubuntu-latest
 
     steps:
-    # 1. GitHub se naya code download karo
-    - name: Checkout Code
-      uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-    # 2. GitHub ke secrets se Docker Hub par safe login karo
-    - name: Login to Docker Hub
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets::DOCKERHUB_USERNAME }}
-        password: ${{ secrets::DOCKERHUB_TOKEN }}
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
 
-    # 3. Docker Buildx setup karo (Advanced build features ke liye)
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Install Dependencies
+        run: |
+          pip install -r backend/requirements.txt
 
-    # 4. Image build karo aur seedhe Docker Hub par PUSH kar do!
-    - name: Build and Push Backend Image
-      uses: docker/build-push-action@v5
-      with:
-        context: ./backend # Kis folder me Dockerfile padi hai
-        file: ./backend/Dockerfile
-        push: true # 🌟 True ka matlab: Direct upload kar do cloud par!
-        # Tumhara_username/repo_naam:tag
-        tags: ${{ secrets::DOCKERHUB_USERNAME }}/cloudops-backend:latest
+      - name: Success Message
+        run: echo "GitHub Action Working!"
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./backend/Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/cloudops-backend:latest
